@@ -76,7 +76,7 @@ jobs:
 
       - name: Check Deployment Success
         run: |
-          docker ps -a
-          kubectl get pod -o wide
+          docker ps
+          kubectl get pod --show-labels -o wide
           kubectl get svc -o wide
           curl -v localhost:30080
