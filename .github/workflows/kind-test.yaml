@@ -79,4 +79,4 @@ jobs:
           docker ps
           kubectl get pod --show-labels -o wide
           kubectl get svc -o wide
-          curl -v localhost:30080
+          curl -v localhost:30080/healthcheck
