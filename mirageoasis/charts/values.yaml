@@ -1,0 +1,9 @@
+image:
+  name: mirageoasis
+
+service:
+  name: http
+  protocol: TCP
+  type: NodePort
+  port: 8080
+  nodePort: 30080
