@@ -1,78 +1,96 @@
 name: Build Image
 
-on: [pull_request]
-
 env:
-  CLUSTER_NAME: argoproj-ossca
-  IMAGE_NAME: ossca:test
+  YEAR: 2025
+  IMAGE_NAME: helm-test
+
+on:
+
+  push:
+    paths:
+      - '20*/helm/**'
+      - '20*/argo-cd/**'
+  pull_request:
+    paths:
+      - '20*/helm/**'
+      - '20*/argo-cd/**'
 
 jobs:
-  build:
+  prepare:
+    name: Prepare Job
     runs-on: ubuntu-latest
+    outputs:
+      run_helm: ${{ steps.filter.outputs.helm }}
+      run_argo: ${{ steps.filter.outputs.argo }}
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Detect changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            helm:
+              - '20*/helm/**'
+            argo:
+              - '20*/argo-cd/**'
+  
+  helm-test:
+    name: Helm Test
+    env:
+      HELM_TEST_CLUSTER_NAME: helm-e2e
+    needs: prepare
+    if: needs.prepare.outputs.run_helm == 'true'
+    runs-on: ubuntu-latest
+    steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Container Image
-        uses: docker/build-push-action@v6
-        with:
-          context: "{{defaultContext}}:${{ github.actor }}"
-          file: ./Dockerfile
-          platforms: linux/amd64
-          push: false
-          tags: ${{ env.IMAGE_NAME }}
-          load: true
-
-      - name: Set up environment (download Kubernetes dependencies)
-        run: |
-          TMP_DIR=$(mktemp -d)
-          # kubectl
-          curl -L https://dl.k8s.io/release/v1.30.2/bin/linux/amd64/kubectl -o ${TMP_DIR}/kubectl
-          
-          # kind
-          curl -Lo ${TMP_DIR}/kind https://kind.sigs.k8s.io/dl/v0.23.0/kind-linux-amd64
-          
-          # Helm
-          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-          chmod 700 get_helm.sh
-          ./get_helm.sh
-          
-          # Install
-          sudo cp ${TMP_DIR}/kubectl /usr/local/bin/kubectl
-          sudo cp ${TMP_DIR}/kind /usr/local/bin/kind
-          sudo chmod +x /usr/local/bin/*
-          sudo rm -rf ${TMP_DIR}
-          sudo rm -rf ./get_helm.sh
-
-          kubectl version --client=true -o yaml
-          kind --version
-          helm version
-
-      - name: Create Simple Node Cluster
+      - name: Create Kind Cluster Config
         run: |
           echo "kind: Cluster
           apiVersion: kind.x-k8s.io/v1alpha4
-          name: $CLUSTER_NAME
+          name: $HELM_TEST_CLUSTER_NAME
           nodes:
           - role: control-plane
             extraPortMappings:
             - containerPort: 30080
-              hostPort: 30080
-          - role: worker" >> config.yaml
-          
-          kind create cluster --config ./config.yaml
+              hostPort: 30080" >> config.yaml
       
+      - name: create kind cluster
+        uses: helm/kind-action@v1.9.0
+        with:
+          cluster_name: helm-e2e
+          config: ./config.yaml
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Prepare Docker build Context
+        id: ctx
+        run: |
+          echo "context=${{ env.YEAR }}/helm/${{ github.actor }}" >> $GITHUB_OUTPUT
+          echo "tag=${{ env.IMAGE_NAME }}:${{ github.actor }}" >> $GITHUB_OUTPUT
+
+      - name: Build Container Image
+        uses: docker/build-push-action@v6
+        with:
+          context: "{{defaultContext}}:${{ steps.ctx.outputs.context }}"
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: false
+          tags: ${{ steps.ctx.outputs.tag }}
+          load: true
+
       - name: Image Upload to Kind
         run: |
-          kind load docker-image ${{ env.IMAGE_NAME }} --name $CLUSTER_NAME 
+          kind load docker-image ${{ steps.ctx.outputs.tag }} --name $HELM_TEST_CLUSTER_NAME
 
       - name: Deployment Simple App
         run: |
-          cd ${{ github.actor }}
-          helm install --wait --set image.name=${{ env.IMAGE_NAME }} ossca-test ./charts
+          cd ${{ steps.ctx.outputs.context }}
+          helm install --wait --set image.name=${{ steps.ctx.outputs.tag }} ossca-test ./charts
 
       - name: Check Deployment Success
         run: |
@@ -80,3 +98,17 @@ jobs:
           kubectl get pod --show-labels -o wide
           kubectl get svc -o wide
           curl -v localhost:30080/healthcheck
+
+  argocd-test:
+    name: ArgoCD Test
+    needs: prepare
+    if: needs.preare.outputs.run_argo == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: create kind cluster
+        uses: helm/kind-action@v1.9.0
+        with:
+          cluster_name: argocd-e2e
