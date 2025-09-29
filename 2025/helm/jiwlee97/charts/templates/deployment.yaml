@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: {{ include "myapp.name" . }}
-          image: {{ .Values.image.name }}
+          image: "{{ .Values.image.name }}"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: {{ .Values.pod.port }}

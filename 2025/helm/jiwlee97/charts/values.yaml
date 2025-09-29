@@ -1,8 +1,8 @@
-appName: my-app
+appName: jiwlee97-app
 appVersion: v1
 
 image:
-  name: my-app
+  name: jiwlee97-app
 
 # Pod 설정
 pod:

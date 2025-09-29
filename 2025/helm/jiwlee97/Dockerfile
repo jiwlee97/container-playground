@@ -1,20 +1,19 @@
-FROM node:18-alpine AS build
+FROM python:3.11-slim
 
 WORKDIR /app
-COPY ./app/package*.json ./app/tsconfig.json ./
-COPY ./app/ .
 
-RUN npm install
-RUN npm run build
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -r requirements.txt
 
-FROM node:18-alpine AS production
+# Copy application code
+COPY app.py .
 
-WORKDIR /app
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/package*.json ./
-
-RUN npm ci --only=production && npm cache clean --force
-
+# Set environment variables
 ENV PORT=8080
+
+# Expose port
 EXPOSE 8080
-CMD ["node", "dist/main.js"]
+
+# Start the application
+CMD ["python", "app.py"]
