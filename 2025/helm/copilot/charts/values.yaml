@@ -1,8 +1,8 @@
-appName: my-app
+appName: copilot-app
 appVersion: v1
 
 image:
-  name: my-app
+  name: copilot-app
 
 # Pod 설정
 pod:

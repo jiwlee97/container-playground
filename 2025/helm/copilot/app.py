@@ -1,22 +1,23 @@
-from flask import Flask
+from flask import Flask, jsonify
 import os
 
 app = Flask(__name__)
 
 @app.route('/api/v1/jiwlee97')
 def github_account():
-    return {
-        "message": "Hello from jiwlee97!",
-        "github": "jiwlee97",
-        "version": "v1"
-    }
+    return jsonify({
+        "message": "Hello from copilot!",
+        "github": "jiwlee97", 
+        "version": "v1",
+        "implementation": "copilot"
+    })
 
 @app.route('/healthcheck')
 def health_check():
-    return {
+    return jsonify({
         "status": "healthy",
         "message": "Service is running properly"
-    }
+    })
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))

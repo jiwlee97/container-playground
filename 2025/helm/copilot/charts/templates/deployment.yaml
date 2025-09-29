@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "myapp.name" . }}
+  name: {{ include "copilot.name" . }}
   labels:
-    {{- include "myapp.selectorLabels" . | nindent 4 }}
+    {{- include "copilot.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "myapp.selectorLabels" . | nindent 6 }}
+      {{- include "copilot.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "myapp.selectorLabels" . | nindent 8 }}
+        {{- include "copilot.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-        - name: {{ include "myapp.name" . }}
-          image: {{ .Values.image.name }}
+        - name: {{ include "copilot.name" . }}
+          image: "{{ .Values.image.name }}"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: {{ .Values.pod.port }}

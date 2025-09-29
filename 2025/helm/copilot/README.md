@@ -1,13 +1,13 @@
-# jiwlee97 Web Service
+# Copilot Web Service
 
-A simple web service implementation for the container playground project.
+A Python Flask web service implementation for the container playground project.
 
 ## Overview
 
 This project contains a Python Flask web service that meets all the specified requirements:
 
-- ✅ Located in `2025/helm/jiwlee97/` directory
-- ✅ Dockerfile in root directory
+- ✅ Located in `2025/helm/copilot/` directory
+- ✅ Dockerfile in root directory  
 - ✅ Web service runs on port 8080 by default
 - ✅ Port configurable via `PORT` environment variable
 - ✅ Two required API endpoints implemented
@@ -21,8 +21,9 @@ Returns information about the GitHub account.
 ```json
 {
   "github": "jiwlee97",
-  "message": "Hello from jiwlee97!",
-  "version": "v1"
+  "message": "Hello from copilot!",
+  "version": "v1",
+  "implementation": "copilot"
 }
 ```
 
@@ -31,8 +32,8 @@ Returns service health status.
 
 ```json
 {
-  "message": "Service is running properly",
-  "status": "healthy"
+  "status": "healthy",
+  "message": "Service is running properly"
 }
 ```
 
@@ -40,17 +41,17 @@ Returns service health status.
 
 ### Build the image
 ```bash
-docker build -t jiwlee97-app .
+docker build -t copilot-app .
 ```
 
 ### Run the container
 ```bash
-docker run -d -p 8080:8080 jiwlee97-app
+docker run -d -p 8080:8080 copilot-app
 ```
 
 ### Run with custom port
 ```bash
-docker run -d -p 9000:9000 -e PORT=9000 jiwlee97-app
+docker run -d -p 9000:9000 -e PORT=9000 copilot-app
 ```
 
 ## Helm Chart
@@ -63,12 +64,12 @@ The Helm chart is located in the `charts/` directory and includes:
 
 ### Deploy with Helm
 ```bash
-helm install jiwlee97-app charts/
+helm install copilot-app charts/
 ```
 
 ### Template rendering test
 ```bash
-helm template jiwlee97-app charts/
+helm template copilot-app charts/
 ```
 
 ## Technical Details
@@ -82,7 +83,7 @@ helm template jiwlee97-app charts/
 ## Files Structure
 
 ```
-2025/helm/jiwlee97/
+2025/helm/copilot/
 ├── Dockerfile          # Docker image definition
 ├── app.py             # Python Flask application
 ├── requirements.txt   # Python dependencies
@@ -94,4 +95,18 @@ helm template jiwlee97-app charts/
         ├── _helpers.tpl
         ├── deployment.yaml
         └── service.yaml
+```
+
+## Development
+
+### Local development
+```bash
+pip install -r requirements.txt
+python app.py
+```
+
+### Testing endpoints
+```bash
+curl http://localhost:8080/api/v1/jiwlee97
+curl http://localhost:8080/healthcheck
 ```
